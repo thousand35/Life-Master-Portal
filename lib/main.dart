@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -75,8 +76,9 @@ class PortalHomePage extends StatefulWidget {
   State<PortalHomePage> createState() => _PortalHomePageState();
 }
 
-class _PortalHomePageState extends State<PortalHomePage> {
-  final PageController _pageController = PageController();
+class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerController;
+  late PageController _pageController;
   int _currentPage = 0;
 
   // 取得した情報を保持するマップ
@@ -102,7 +104,7 @@ class _PortalHomePageState extends State<PortalHomePage> {
       'color': Colors.blue,
       'emoji': '🔐',
       'subtitle': '安心・安全のローカル保存型管理',
-      'description': '大切なパスワードを強力な暗号化で保護。あえてクラウドを使わない「ローカル完結」の設計で、究極のプライバシーと安全を提供します。',
+      'description': '大切な資産であるパスワードを強力な暗号化で保護。クラウドを介さない「ローカル完結」により、プライバシーへの懸念を払拭し圧倒的な安心感を提供します。',
       'default_download': 'https://github.com/thousand35/password_download/releases/latest/download/app-release.apk',
     },
     {
@@ -113,7 +115,7 @@ class _PortalHomePageState extends State<PortalHomePage> {
       'color': const Color(0xFF0288D1),
       'emoji': '⛽',
       'subtitle': '愛車の健康と燃料コストを可視化',
-      'description': '給油情報を入れるだけで燃費や維持費を自動計算。推移グラフで無駄をチェックし、愛車とのカーライフをより経済的にサポートします。',
+      'description': '給油情報を入力するだけで燃費や維持費をインテリジェントに計算。燃費推移を追い、愛車との時間をより長く楽しむためのデータ駆動型カーライフを。',
       'default_download': 'https://github.com/thousand35/fuel_download/releases/latest/download/app-release.apk',
     },
     {
@@ -123,8 +125,8 @@ class _PortalHomePageState extends State<PortalHomePage> {
       'icon': Icons.menu_book,
       'color': Colors.brown,
       'emoji': '📚',
-      'subtitle': 'スマホで完結する蔵書・積読管理',
-      'description': 'バーコードをスキャンするだけで本棚をデジタル化。持っている本をいつでも確認でき、書店での「ダブり買い」や「積読」の悩みから解放します。',
+      'subtitle': 'あなたの本棚を、インテリジェントに整理。',
+      'description': 'バーコードスキャンで、自宅の本棚を数秒でデジタル化。外出先でも蔵書を瞬時に確認でき、「ダブり買い」や「積読」の悩みから解放されるスマートな読書体験を。',
       'default_download': 'https://github.com/thousand35/book_download/releases/latest/download/app-release.apk',
     },
   ];
@@ -132,6 +134,15 @@ class _PortalHomePageState extends State<PortalHomePage> {
   @override
   void initState() {
     super.initState();
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+    
+    // 無限ループのために、大きな数から開始する（apps.length の倍数）
+    _pageController = PageController(initialPage: apps.length * 1000);
+    _currentPage = 0; // 初期表示は modulo 0
+    
     for (var app in apps) {
       _releaseData[app['id']] = AppReleaseInfo();
     }
@@ -191,240 +202,288 @@ class _PortalHomePageState extends State<PortalHomePage> {
   }
 
   @override
+  void dispose() {
+    _shimmerController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 上部：2×2の極小ボタン
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 4.5, // より横長・スリムに
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: apps.length,
-                itemBuilder: (context, index) {
-                  final isSelected = _currentPage == index;
-                  final app = apps[index];
-                  return GestureDetector(
-                    onTap: () {
-                      _pageController.animateToPage(
-                        index,
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeOutQuart,
-                      );
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? app['color'] : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          if (isSelected) 
-                            BoxShadow(color: app['color'].withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))
-                          else
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1))
-                        ],
-                        border: Border.all(
-                          color: isSelected ? app['color'] : Colors.grey.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            app['icon'],
-                            size: 14,
-                            color: isSelected ? Colors.white : app['color'],
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              app['name'],
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : Colors.black87,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // 下部：メインコンテンツ（スワイプ対応）
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) => setState(() => _currentPage = index),
-                itemCount: apps.length,
-                itemBuilder: (context, index) {
-                  final app = apps[index];
-                  final release = _releaseData[app['id']] ?? AppReleaseInfo();
-                  return SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFEDF2F7),
+              Color(0xFFF8FAFC),
+              Color(0xFFE2E8F0),
+            ],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // 上部：2×2の極小ボタン
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 4.5,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: apps.length,
+                  itemBuilder: (context, index) {
+                    final isSelected = _currentPage == index;
+                    final app = apps[index];
+                    return HoverableCard(
+                      onTap: () {
+                        // 現在のグローバルページから、最も近い対象インデックスのページを計算
+                        final int currentGlobalPage = _pageController.page?.round() ?? (apps.length * 1000);
+                        final int targetPage = currentGlobalPage + (index - (currentGlobalPage % apps.length));
+                        
+                        _pageController.animateToPage(
+                          targetPage,
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeOutQuart,
+                        );
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
+                          color: isSelected ? app['color'] : Colors.white.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(8),
                           boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 30,
-                              offset: const Offset(0, 10),
-                            )
+                            if (isSelected) 
+                              BoxShadow(color: app['color'].withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))
+                            else
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1))
+                          ],
+                          border: Border.all(
+                            color: isSelected ? app['color'] : Colors.white.withValues(alpha: 0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              app['icon'],
+                              size: 14,
+                              color: isSelected ? Colors.white : app['color'],
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                app['name'],
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Center(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    '${app['emoji']} ${app['name']}',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w900,
-                                      color: app['color'],
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    app['subtitle'],
-                                    style: TextStyle(
-                                      color: Colors.blueGrey.shade400,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 1.0,
-                                    ),
-                                  ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // 下部：メインコンテンツ（スワイプ対応）
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) => setState(() => _currentPage = index % apps.length),
+                  // itemCount を指定しないことで無限ループにする
+                  itemBuilder: (context, index) {
+                    final app = apps[index % apps.length];
+                    final release = _releaseData[app['id']] ?? AppReleaseInfo();
+                    return SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.75),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 10),
+                                  )
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              app['description'],
-                              style: const TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 32),
-                            
-                            // バージョン & 更新内容
-                            _buildInfoSection(
-                              title: '最新バージョン情報',
-                              icon: Icons.new_releases_outlined,
-                              color: app['color'],
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Text('バージョン：', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      if (release.isLoading)
-                                        const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                                      else
-                                        Text(release.version, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Text('更新履歴：', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: Colors.grey.shade200),
+                                  Center(
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          '${app['emoji']} ${app['name']}',
+                                          style: TextStyle(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w900,
+                                            color: app['color'],
+                                            letterSpacing: -0.5,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          app['subtitle'],
+                                          style: TextStyle(
+                                            color: Colors.blueGrey.shade400,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 1.0,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    child: Text(
-                                      release.body,
-                                      style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    app['description'],
+                                    style: const TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 32),
+                                  
+                                  // バージョン & 更新内容
+                                  _buildInfoSection(
+                                    title: '最新バージョン情報',
+                                    icon: Icons.new_releases_outlined,
+                                    color: app['color'],
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Text('バージョン：', style: TextStyle(fontWeight: FontWeight.bold)),
+                                            if (release.isLoading)
+                                              ShimmerWidget(
+                                                controller: _shimmerController,
+                                                child: Container(width: 80, height: 16, color: Colors.white),
+                                              )
+                                            else
+                                              Text(release.version, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        const Text('更新履歴：', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 4),
+                                        if (release.isLoading)
+                                          ShimmerWidget(
+                                            controller: _shimmerController,
+                                            child: Container(
+                                              width: double.infinity,
+                                              height: 60,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                          )
+                                        else
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.5),
+                                              borderRadius: BorderRadius.circular(10),
+                                              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                                            ),
+                                            child: Text(
+                                              release.body,
+                                              style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 24),
+                                  
+                                  const SizedBox(height: 24),
 
-                            // ダウンロードボタン
-                            Center(
-                              child: ElevatedButton.icon(
-                                onPressed: release.isLoading ? null : () => _launchURL(release.downloadUrl),
-                                icon: const Icon(Icons.download),
-                                label: const Text('最新版 APKをダウンロード', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: app['color'],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-                                  elevation: 4,
-                                ),
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 32),
-                            
-                            // インストール手順ガイド
-                            _buildInfoSection(
-                              title: 'インストール手順',
-                              icon: Icons.install_mobile_outlined,
-                              color: const Color(0xFF0277BD),
-                              backgroundColor: const Color(0xFFE3F2FD),
-                              child: Column(
-                                children: [
-                                  _buildStep('1', 'APKファイルをダウンロードして保存します。'),
-                                  _buildStep('2', '通知やファイル管理アプリから APKを開きます。'),
-                                  _buildStep('3', '「この提供元のアプリを許可」をしてインストール。'),
-                                  _buildStep('4', '完了！安全なツールですので安心してお使いください。'),
+                                  // ダウンロードボタン
+                                  Center(
+                                    child: ElevatedButton.icon(
+                                      onPressed: release.isLoading ? null : () => _launchURL(release.downloadUrl),
+                                      icon: const Icon(Icons.download),
+                                      label: const Text('最新バージョンをダウンロード', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: app['color'],
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                                        elevation: 4,
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                  const SizedBox(height: 32),
+                                  
+                                  // インストール手順ガイド
+                                  _buildInfoSection(
+                                    title: 'インストール手順',
+                                    icon: Icons.install_mobile_outlined,
+                                    color: const Color(0xFF0277BD),
+                                    backgroundColor: const Color(0xFFE3F2FD).withValues(alpha: 0.6),
+                                    child: Column(
+                                      children: [
+                                        _buildStep('1', 'APKファイルをダウンロードして保存します。'),
+                                        _buildStep('2', '通知やファイル管理アプリから APKを開きます。'),
+                                        _buildStep('3', '「この提供元のアプリを許可」をしてインストール。'),
+                                        _buildStep('4', 'セットアップ完了！あなたのデジタルライフを、より豊かに。'),
+                                      ],
+                                    ),
+                                  ),
+                                  
+                                  const SizedBox(height: 20),
+                                  const Center(
+                                    child: Text(
+                                      '※ 提供元不明のアプリとして警告が表示される場合がありますが、安全な正規パッケージですのでご安心ください。\n※ ご不明な点がございましたら、お気軽にお問い合わせください。',
+                                      style: TextStyle(fontSize: 10, color: Color(0xFF90A4AE), height: 1.5),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                            
-                            const SizedBox(height: 20),
-                            const Center(
-                              child: Text(
-                                '※ Google Playストアを通さない配布のため、警告が出ることがあります。\n※ 弊社アプリは公式の署名鍵で保護されており、安全です。',
-                                style: TextStyle(fontSize: 10, color: Color(0xFF90A4AE), height: 1.5),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
-            
-            // お問い合わせ
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: TextButton.icon(
-                onPressed: () => _launchURL('https://docs.google.com/forms/d/e/1FAIpQLSfw-yPjeWq_Vd101oZ5OFSGYDHvGBnuYBwudogxKZRQHgnQ2g/viewform?usp=dialog'),
-                icon: const Icon(Icons.mail_outline, size: 16),
-                label: const Text('ご意見・ご要望はこちら', style: TextStyle(fontSize: 12)),
+              
+              // お問い合わせ
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: TextButton.icon(
+                  onPressed: () => _launchURL('https://docs.google.com/forms/d/e/1FAIpQLSfw-yPjeWq_Vd101oZ5OFSGYDHvGBnuYBwudogxKZRQHgnQ2g/viewform?usp=dialog'),
+                  icon: const Icon(Icons.mail_outline, size: 16),
+                  label: const Text('ご意見・ご要望はこちら', style: TextStyle(fontSize: 12)),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -502,5 +561,79 @@ class _PortalHomePageState extends State<PortalHomePage> {
         );
       }
     }
+  }
+}
+
+/// マウスホバー時に少し浮き上がる演出を加えるウィジェット
+class HoverableCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const HoverableCard({super.key, required this.child, required this.onTap});
+
+  @override
+  State<HoverableCard> createState() => _HoverableCardState();
+}
+
+class _HoverableCardState extends State<HoverableCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.03 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+/// ローディング中にキラリと光る演出を加えるウィジェット
+class ShimmerWidget extends StatelessWidget {
+  final Widget child;
+  final AnimationController controller;
+  const ShimmerWidget({super.key, required this.child, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return ShaderMask(
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: const [
+                Colors.black12,
+                Colors.black26,
+                Colors.black12,
+              ],
+              stops: const [0.3, 0.5, 0.7],
+              transform: _SlidingGradientTransform(slidePercent: controller.value),
+            ).createShader(bounds);
+          },
+          child: child,
+        );
+      },
+    );
+  }
+}
+
+class _SlidingGradientTransform extends GradientTransform {
+  final double slidePercent;
+  const _SlidingGradientTransform({required this.slidePercent});
+
+  @override
+  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
+    return Matrix4.translationValues(bounds.width * (slidePercent * 2 - 1), 0.0, 0.0);
   }
 }
