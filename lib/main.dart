@@ -25,7 +25,10 @@ class LifeMasterPortal extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         textTheme: const TextTheme(
-          titleLarge: TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.5),
+          titleLarge: TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
       ),
       scrollBehavior: const MaterialScrollBehavior().copyWith(
@@ -76,7 +79,8 @@ class PortalHomePage extends StatefulWidget {
   State<PortalHomePage> createState() => _PortalHomePageState();
 }
 
-class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProviderStateMixin {
+class _PortalHomePageState extends State<PortalHomePage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _shimmerController;
   late PageController _pageController;
   int _currentPage = 0;
@@ -93,8 +97,12 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
       'color': Colors.orange,
       'emoji': '💰',
       'subtitle': 'シンプル・高機能な収支管理',
-      'description': '日々の収支をカレンダーやグラフで直感的に管理。CSV入出力やクラウド同期にも対応した、長く使い続けられる家計簿アプリです。',
-      'default_download': 'https://github.com/thousand35/kakeibo_download/releases/latest/download/app-release.apk',
+      'description':
+          '日々の収支をカレンダーやグラフで直感的に管理。CSV入出力やクラウド同期にも対応した、長く使い続けられる家計簿アプリです。',
+      'isStatic': true,
+      'staticVersion': 'v3.0.0',
+      'staticBody': '新生・家計簿マスター：シリーズ刷新と機能の完成。\n\n※旧アプリ（v2.x以前）をお使いの方は、本バージョンへの移行をお願いいたします。',
+      'default_download': '/downloads/kakeibomaster_v3.0.0.apk',
     },
     {
       'name': 'パスワードマスター',
@@ -104,8 +112,10 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
       'color': Colors.blue,
       'emoji': '🔐',
       'subtitle': '安心・安全のローカル保存型管理',
-      'description': '大切な資産であるパスワードを強力な暗号化で保護。クラウドを介さない「ローカル完結」により、プライバシーへの懸念を払拭し圧倒的な安心感を提供します。',
-      'default_download': 'https://github.com/thousand35/password_download/releases/latest/download/app-release.apk',
+      'description':
+          '大切な資産であるパスワードを強力な暗号化で保護。クラウドを介さない「ローカル完結」により、プライバシーへの懸念を払拭し圧倒的な安心感を提供します。',
+      'default_download':
+          'https://github.com/thousand35/password_download/releases/latest/download/app-release.apk',
     },
     {
       'name': '燃費管理マスター',
@@ -115,8 +125,10 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
       'color': const Color(0xFF0288D1),
       'emoji': '⛽',
       'subtitle': '愛車の健康と燃料コストを可視化',
-      'description': '給油情報を入力するだけで燃費や維持費をインテリジェントに計算。燃費推移を追い、愛車との時間をより長く楽しむためのデータ駆動型カーライフを。',
-      'default_download': 'https://github.com/thousand35/fuel_download/releases/latest/download/app-release.apk',
+      'description':
+          '給油情報を入力するだけで燃費や維持費をインテリジェントに計算。燃費推移を追い、愛車との時間をより長く楽しむためのデータ駆動型カーライフを。',
+      'default_download':
+          'https://github.com/thousand35/fuel_download/releases/latest/download/app-release.apk',
     },
     {
       'name': '蔵書管理マスター',
@@ -126,8 +138,10 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
       'color': Colors.brown,
       'emoji': '📚',
       'subtitle': 'あなたの本棚を、インテリジェントに整理。',
-      'description': 'バーコードスキャンで、自宅の本棚を数秒でデジタル化。外出先でも蔵書を瞬時に確認でき、「ダブり買い」や「積読」の悩みから解放されるスマートな読書体験を。',
-      'default_download': 'https://github.com/thousand35/book_download/releases/latest/download/app-release.apk',
+      'description':
+          'バーコードスキャンで、自宅の本棚を数秒でデジタル化。外出先でも蔵書を瞬時に確認でき、「ダブり買い」や「積読」の悩みから解放されるスマートな読書体験を。',
+      'default_download':
+          'https://github.com/thousand35/book_download/releases/latest/download/app-release.apk',
     },
   ];
 
@@ -138,11 +152,11 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
-    
+
     // 無限ループのために、大きな数から開始する（apps.length の倍数）
     _pageController = PageController(initialPage: apps.length * 1000);
     _currentPage = 0; // 初期表示は modulo 0
-    
+
     for (var app in apps) {
       _releaseData[app['id']] = AppReleaseInfo();
     }
@@ -151,21 +165,42 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
 
   Future<void> _fetchAllReleaseInfo() async {
     for (var app in apps) {
-      _fetchReleaseInfo(app['id'], app['repo'], app['default_download']);
+      if (app['isStatic'] == true) {
+        _setStaticReleaseInfo(app);
+      } else {
+        _fetchReleaseInfo(app['id'], app['repo'], app['default_download']);
+      }
     }
   }
 
-  Future<void> _fetchReleaseInfo(String appId, String repo, String fallbackUrl) async {
+  void _setStaticReleaseInfo(Map<String, dynamic> app) {
+    setState(() {
+      _releaseData[app['id']] = AppReleaseInfo(
+        version: app['staticVersion'] ?? 'Unknown',
+        body: app['staticBody'] ?? '',
+        downloadUrl: app['default_download'],
+        isLoading: false,
+      );
+    });
+  }
+
+  Future<void> _fetchReleaseInfo(
+    String appId,
+    String repo,
+    String fallbackUrl,
+  ) async {
     try {
       final response = await http.get(
-        Uri.parse('https://api.github.com/repos/thousand35/$repo/releases/latest'),
+        Uri.parse(
+          'https://api.github.com/repos/thousand35/$repo/releases/latest',
+        ),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final assets = data['assets'] as List;
         String downloadUrl = fallbackUrl;
-        
+
         // APKファイルを探す
         for (var asset in assets) {
           if (asset['name'].toString().endsWith('.apk')) {
@@ -216,11 +251,7 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFEDF2F7),
-              Color(0xFFF8FAFC),
-              Color(0xFFE2E8F0),
-            ],
+            colors: [Color(0xFFEDF2F7), Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
             stops: [0.0, 0.5, 1.0],
           ),
         ),
@@ -246,9 +277,13 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                     return HoverableCard(
                       onTap: () {
                         // 現在のグローバルページから、最も近い対象インデックスのページを計算
-                        final int currentGlobalPage = _pageController.page?.round() ?? (apps.length * 1000);
-                        final int targetPage = currentGlobalPage + (index - (currentGlobalPage % apps.length));
-                        
+                        final int currentGlobalPage =
+                            _pageController.page?.round() ??
+                            (apps.length * 1000);
+                        final int targetPage =
+                            currentGlobalPage +
+                            (index - (currentGlobalPage % apps.length));
+
                         _pageController.animateToPage(
                           targetPage,
                           duration: const Duration(milliseconds: 400),
@@ -259,16 +294,28 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                         duration: const Duration(milliseconds: 250),
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? app['color'] : Colors.white.withValues(alpha: 0.8),
+                          color: isSelected
+                              ? app['color']
+                              : Colors.white.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
-                            if (isSelected) 
-                              BoxShadow(color: app['color'].withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))
+                            if (isSelected)
+                              BoxShadow(
+                                color: app['color'].withValues(alpha: 0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              )
                             else
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1))
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
                           ],
                           border: Border.all(
-                            color: isSelected ? app['color'] : Colors.white.withValues(alpha: 0.5),
+                            color: isSelected
+                                ? app['color']
+                                : Colors.white.withValues(alpha: 0.5),
                             width: 1,
                           ),
                         ),
@@ -286,7 +333,9 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.white : Colors.black87,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -303,7 +352,8 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
-                  onPageChanged: (index) => setState(() => _currentPage = index % apps.length),
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index % apps.length),
                   // itemCount を指定しないことで無限ループにする
                   itemBuilder: (context, index) {
                     final app = apps[index % apps.length];
@@ -320,13 +370,15 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.75),
                                 borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withValues(alpha: 0.04),
                                     blurRadius: 30,
                                     offset: const Offset(0, 10),
-                                  )
+                                  ),
                                 ],
                               ),
                               child: Column(
@@ -360,33 +412,58 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                                   const SizedBox(height: 24),
                                   Text(
                                     app['description'],
-                                    style: const TextStyle(fontSize: 15, height: 1.6, color: Colors.black87),
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      height: 1.6,
+                                      color: Colors.black87,
+                                    ),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 32),
-                                  
+
                                   // バージョン & 更新内容
                                   _buildInfoSection(
                                     title: '最新バージョン情報',
                                     icon: Icons.new_releases_outlined,
                                     color: app['color'],
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            const Text('バージョン：', style: TextStyle(fontWeight: FontWeight.bold)),
+                                            const Text(
+                                              'バージョン：',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                             if (release.isLoading)
                                               ShimmerWidget(
                                                 controller: _shimmerController,
-                                                child: Container(width: 80, height: 16, color: Colors.white),
+                                                child: Container(
+                                                  width: 80,
+                                                  height: 16,
+                                                  color: Colors.white,
+                                                ),
                                               )
                                             else
-                                              Text(release.version, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                              Text(
+                                                release.version,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
                                           ],
                                         ),
                                         const SizedBox(height: 12),
-                                        const Text('更新履歴：', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        const Text(
+                                          '更新履歴：',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                         const SizedBox(height: 4),
                                         if (release.isLoading)
                                           ShimmerWidget(
@@ -396,7 +473,8 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                                               height: 60,
                                               decoration: BoxDecoration(
                                                 color: Colors.white,
-                                                borderRadius: BorderRadius.circular(10),
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                               ),
                                             ),
                                           )
@@ -405,60 +483,105 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                                             width: double.infinity,
                                             padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withValues(alpha: 0.5),
-                                              borderRadius: BorderRadius.circular(10),
-                                              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                                              color: Colors.white.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: Colors.grey.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                              ),
                                             ),
                                             child: Text(
                                               release.body,
-                                              style: const TextStyle(fontSize: 13, height: 1.5, color: Colors.black87),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                height: 1.5,
+                                                color: Colors.black87,
+                                              ),
                                             ),
                                           ),
                                       ],
                                     ),
                                   ),
-                                  
+
                                   const SizedBox(height: 24),
 
                                   // ダウンロードボタン
                                   Center(
                                     child: ElevatedButton.icon(
-                                      onPressed: release.isLoading ? null : () => _launchURL(release.downloadUrl),
+                                      onPressed: release.isLoading
+                                          ? null
+                                          : () =>
+                                                _launchURL(release.downloadUrl),
                                       icon: const Icon(Icons.download),
-                                      label: const Text('最新バージョンをダウンロード', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      label: const Text(
+                                        '最新バージョンをダウンロード',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: app['color'],
                                         foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 40,
+                                          vertical: 18,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            50,
+                                          ),
+                                        ),
                                         elevation: 4,
                                       ),
                                     ),
                                   ),
-                                  
+
                                   const SizedBox(height: 32),
-                                  
+
                                   // インストール手順ガイド
                                   _buildInfoSection(
                                     title: 'インストール手順',
                                     icon: Icons.install_mobile_outlined,
                                     color: const Color(0xFF0277BD),
-                                    backgroundColor: const Color(0xFFE3F2FD).withValues(alpha: 0.6),
+                                    backgroundColor: const Color(
+                                      0xFFE3F2FD,
+                                    ).withValues(alpha: 0.6),
                                     child: Column(
                                       children: [
-                                        _buildStep('1', 'APKファイルをダウンロードして保存します。'),
-                                        _buildStep('2', '通知やファイル管理アプリから APKを開きます。'),
-                                        _buildStep('3', '「この提供元のアプリを許可」をしてインストール。'),
-                                        _buildStep('4', 'セットアップ完了！あなたのデジタルライフを、より豊かに。'),
+                                        _buildStep(
+                                          '1',
+                                          'APKファイルをダウンロードして保存します。',
+                                        ),
+                                        _buildStep(
+                                          '2',
+                                          '通知やファイル管理アプリから APKを開きます。',
+                                        ),
+                                        _buildStep(
+                                          '3',
+                                          '「この提供元のアプリを許可」をしてインストール。',
+                                        ),
+                                        _buildStep(
+                                          '4',
+                                          'セットアップ完了！あなたのデジタルライフを、より豊かに。',
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  
+
                                   const SizedBox(height: 20),
                                   const Center(
                                     child: Text(
                                       '※ 提供元不明のアプリとして警告が表示される場合がありますが、安全な正規パッケージですのでご安心ください。\n※ ご不明な点がございましたら、お気軽にお問い合わせください。',
-                                      style: TextStyle(fontSize: 10, color: Color(0xFF90A4AE), height: 1.5),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Color(0xFF90A4AE),
+                                        height: 1.5,
+                                      ),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -472,14 +595,19 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
                   },
                 ),
               ),
-              
+
               // お問い合わせ
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextButton.icon(
-                  onPressed: () => _launchURL('https://docs.google.com/forms/d/e/1FAIpQLSfw-yPjeWq_Vd101oZ5OFSGYDHvGBnuYBwudogxKZRQHgnQ2g/viewform?usp=dialog'),
+                  onPressed: () => _launchURL(
+                    'https://docs.google.com/forms/d/e/1FAIpQLSfw-yPjeWq_Vd101oZ5OFSGYDHvGBnuYBwudogxKZRQHgnQ2g/viewform?usp=dialog',
+                  ),
                   icon: const Icon(Icons.mail_outline, size: 16),
-                  label: const Text('ご意見・ご要望はこちら', style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    'ご意見・ご要望はこちら',
+                    style: TextStyle(fontSize: 12),
+                  ),
                 ),
               ),
             ],
@@ -502,7 +630,9 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
       decoration: BoxDecoration(
         color: backgroundColor ?? Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: backgroundColor == null ? Border.all(color: Colors.grey.shade100) : null,
+        border: backgroundColor == null
+            ? Border.all(color: Colors.grey.shade100)
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,7 +643,11 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 15),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontSize: 15,
+                ),
               ),
             ],
           ),
@@ -540,12 +674,23 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
             ),
             child: Text(
               num,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 13, height: 1.4, color: Colors.black87)),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: Colors.black87,
+              ),
+            ),
           ),
         ],
       ),
@@ -556,9 +701,9 @@ class _PortalHomePageState extends State<PortalHomePage> with SingleTickerProvid
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('リンクを開けませんでした: $urlString')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('リンクを開けませんでした: $urlString')));
       }
     }
   }
@@ -600,7 +745,11 @@ class _HoverableCardState extends State<HoverableCard> {
 class ShimmerWidget extends StatelessWidget {
   final Widget child;
   final AnimationController controller;
-  const ShimmerWidget({super.key, required this.child, required this.controller});
+  const ShimmerWidget({
+    super.key,
+    required this.child,
+    required this.controller,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -612,13 +761,11 @@ class ShimmerWidget extends StatelessWidget {
             return LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: const [
-                Colors.black12,
-                Colors.black26,
-                Colors.black12,
-              ],
+              colors: const [Colors.black12, Colors.black26, Colors.black12],
               stops: const [0.3, 0.5, 0.7],
-              transform: _SlidingGradientTransform(slidePercent: controller.value),
+              transform: _SlidingGradientTransform(
+                slidePercent: controller.value,
+              ),
             ).createShader(bounds);
           },
           child: child,
@@ -634,6 +781,10 @@ class _SlidingGradientTransform extends GradientTransform {
 
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    return Matrix4.translationValues(bounds.width * (slidePercent * 2 - 1), 0.0, 0.0);
+    return Matrix4.translationValues(
+      bounds.width * (slidePercent * 2 - 1),
+      0.0,
+      0.0,
+    );
   }
 }
