@@ -102,7 +102,7 @@ class _PortalHomePageState extends State<PortalHomePage>
       'isStatic': true,
       'staticVersion': 'v3.0.0',
       'staticBody': '新生・家計簿マスター：シリーズ刷新と機能の完成。\n\n※旧アプリ（v2.x以前）をお使いの方は、本バージョンへの移行をお願いいたします。',
-      'default_download': '/downloads/kakeibomaster_v3.0.0.apk',
+      'default_download': 'downloads/kakeibomaster_v3.0.0.apk',
     },
     {
       'name': 'パスワードマスター',
