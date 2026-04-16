@@ -101,7 +101,7 @@ class _PortalHomePageState extends State<PortalHomePage>
           '日々の収支をカレンダーやグラフで直感的に管理。CSV入出力やクラウド同期にも対応した、長く使い続けられる家計簿アプリです。',
       'isStatic': true,
       'staticVersion': 'v3.0.0',
-      'staticBody': '新生・家計簿マスター：シリーズ刷新と機能の完成。\n\n※旧アプリ（v2.x以前）をお使いの方は、本バージョンへの移行をお願いいたします。',
+      'staticBody': '【v3.0.1 への更新内容】\n・スマートメモ学習機能を搭載（保存時に地名を自動で読み飛ばし、項目名だけを賢く学習）\n・同期処理中のUIフリーズを解消\n・燃費アプリからのデータ受信精度を向上\n\n※旧アプリ（v2.x以前）からの移行がまだお済みでない方も、本バージョンをご利用ください。',
       'default_download': 'downloads/kakeibomaster_v3.0.0.apk',
     },
     {
@@ -129,7 +129,7 @@ class _PortalHomePageState extends State<PortalHomePage>
           '給油記録から燃費を自動計算。ガソリン代の推移や走行距離をグラフで可視化し、愛車のコンディション管理をスマートにサポートします。',
       'isStatic': true,
       'staticVersion': 'v3.0.0',
-      'staticBody': 'リニューアル版・燃費管理マスター：シリーズ刷新と機能の完成。\n\n※旧アプリ（v2.x以前）をお使いの方は、本バージョンへの移行をお願いいたします。',
+      'staticBody': '【v3.0.0 安定版】\n・システム刷新による動作の安定化\n・家計簿マスターへのスムーズなデータ連携に対応\n・一部不具合の修正\n\n※旧アプリ（v2.x以前）をお使いの方は、本バージョンへの移行をお願いいたします。',
       'default_download': 'downloads/fuelmaster_v3.0.0.apk',
     },
     {
