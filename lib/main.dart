@@ -126,9 +126,11 @@ class _PortalHomePageState extends State<PortalHomePage>
       'emoji': '⛽',
       'subtitle': '愛車の健康と燃料コストを可視化',
       'description':
-          '給油情報を入力するだけで燃費や維持費をインテリジェントに計算。燃費推移を追い、愛車との時間をより長く楽しむためのデータ駆動型カーライフを。',
-      'default_download':
-          'https://github.com/thousand35/fuel_download/releases/latest/download/app-release.apk',
+          '給油記録から燃費を自動計算。ガソリン代の推移や走行距離をグラフで可視化し、愛車のコンディション管理をスマートにサポートします。',
+      'isStatic': true,
+      'staticVersion': 'v3.0.0',
+      'staticBody': 'リニューアル版・燃費管理マスター：シリーズ刷新と機能の完成。\n\n※旧アプリ（v2.x以前）をお使いの方は、本バージョンへの移行をお願いいたします。',
+      'default_download': 'downloads/fuelmaster_v3.0.0.apk',
     },
     {
       'name': '蔵書管理マスター',
